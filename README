@@ -15,7 +15,7 @@ The high-level data model is based upon the BBC’s Programmes Ontology, which
 you can read about at http://www.bbc.co.uk/ontologies/programmes/2009-04-17.shtml
 
 Every asset is given a key, identified by an eight-character base32-style
-string (for example, a000p1r). utils/encode.php and utils/decode.php will
+string (for example, a0000p1r). utils/encode.php and utils/decode.php will
 transform arbitrary numbers to and from this base32-style scheme.
 
 To get started, create a database, and put the details in a config.php file in the
