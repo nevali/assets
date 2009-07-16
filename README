@@ -1,0 +1,48 @@
+This is an extremely embryonic broadcast asset management system, written in
+PHP using a MySQL database.
+
+It's not written in PHP for any particular reason, other than it being easy
+to rapidly prototype.
+
+The intention is that this system will track various kinds of assets:
+everything from individual video and audio streams, depicting images,
+subtitles, and so on, through different formats and multiplexing schemes
+into complete programmes, which can then be arranged into series and brands,
+and scheduled for broadcast on one or more outlets (outlets being specific
+outputs of channels).
+
+The high-level data model is based upon the BBC’s Programmes Ontology, which
+you can read about at http://www.bbc.co.uk/ontologies/programmes/2009-04-17.shtml
+
+Every asset is given a key, identified by an eight-character base32-style
+string (for example, a000p1r). utils/encode.php and utils/decode.php will
+transform arbitrary numbers to and from this base32-style scheme.
+
+To get started, create a database, and put the details in a config.php file in the
+lib/ directory (see config.sample.php for an example). You can then run:
+
+php -f utils/initdb.php
+
+The initdb.php script uses database versioning to track state (see the _modules
+database table), and so is safe to run multiple times.
+
+Next, you can import the TV-Anytime XML files from the tv-anytime directory:
+
+php -f utils/import.php tv-anytime/*.xml
+
+This will produce a lot of output, as it imports each of the genres, formats
+and media types contained in the XML files.
+
+The TV-Anytime data isn't used, yet, but demonstrates how the system works. If
+you look for one of the lines in the output which looks like:
+
+Created new term with key a00000s6
+
+You can pass that key to utils/dump.php:
+
+php -f utils/dump.php a00000s6
+
+This is a low-level utility which retrieves the contents of the asset that you
+requested as a PHP object and uses print_r() to dump its contents. If you look
+at the code in lib/object.php and lib/genre.php, you should be able to see how
+it fits together.
