@@ -39,6 +39,7 @@ abstract class Asset
 		'mediatype' => 'MediaTypeAsset',
 		'format' => 'FormatAsset',
 		'video' => 'VideoAsset',
+		'picture' => 'PictureAsset',
 	);
 
 	protected $db;
@@ -50,6 +51,8 @@ abstract class Asset
 	public $created;
 	public $modified;
 	public $url;
+	public $hasManifest;
+	public $assetPath;
 	
 	public static function create($db, $class = '')
 	{
@@ -70,7 +73,8 @@ abstract class Asset
 		$db->insert('asset_object', array(
 			'object_class' => $class,
 			'@object_created' => $db->now(),
-			'@object_modified' => $db->now()
+			'@object_modified' => $db->now(),
+			'object_has_manifest' => false,
 		));
 		$id = $db->insertId();
 		$key = Base32::encode($id);
@@ -142,6 +146,7 @@ abstract class Asset
 			'created' => 'object_created',
 			'modified' => 'object_modified',
 			'url' => 'object_url',
+			'hasManifest' => 'object_has_manifest',
 		);
 	}
 	
@@ -167,6 +172,14 @@ abstract class Asset
 				$this->$pk = $source[$sk];
 			}
 		}
+		if($this->hasManifest == 'Y')
+		{
+			$this->hasManifest = true;
+		}
+		else if($this->hasManifest == 'N')
+		{
+			$this->hasManifest = false;
+		}
 	}
 	
 	protected function replaceProperties()
@@ -179,7 +192,8 @@ abstract class Asset
 			}
 			else if($table == 'asset_object')
 			{
-				$this->db->exec('UPDATE "asset_object" SET "object_modified" = ' . $this->db->now() . ' WHERE "object_key" = ?', $this->key);
+				$this->db->exec('UPDATE "asset_object" SET "object_modified" = ' . $this->db->now() . ', "object_has_manifest" = ? WHERE "object_key" = ?', $this->hasManifest, $this->key);
+				$this->modified = strftime('%Y-%m-%d %H:%M:%S');
 				$this->db->exec('DELETE FROM "asset_url" WHERE "object_key" = ?', $this->key);
 				if(is_array($this->url))
 				{
@@ -211,10 +225,86 @@ abstract class Asset
 			}
 		}
 	}
+
+	protected function commitManifest()
+	{
+		if(!$this->hasManifest) return;
+		$this->assetPath = ASSET_DIR . '/' . $this->key . '/';
+		if(!file_exists($this->assetPath))
+		{
+			mkdir($this->assetPath);
+		}
+		$f = fopen($this->assetPath . '/manifest.xml', 'w');
+		fwrite($f, '<?xml version="1.0" encoding="UTF-8" ?>' . "\n");
+		$this->writeManifest($f);
+		fclose($f);
+	}
+	
+	protected function writeManifest($f)
+	{
+		fwrite($f, '<' . $this->class . ' key="' . $this->key . '" created="' . $this->created . '" modified="' . $this->modified  . '">' . "\n");
+		$this->writeManifestArray($f, $this->url, 'url');
+		$this->writeManifestProperties($f);
+		fwrite($f, '</' . $this->class . '>');
+	}
+
+	protected function writeManifestArray($f, $value, $key)
+	{
+		if(is_array($value) && count($value))
+		{
+			fwrite($f, "\t" . '<' . $key . ' type="array">' . "\n");
+			foreach($value as $v)
+			{
+				fwrite($f, "\t\t" . '<value>' . htmlspecialchars($v, ENT_QUOTES, 'UTF-8') . '</value>' . "\n");
+			}
+			fwrite($f, "\t" . '</' . $key . '>' . "\n");
+		}
+		else
+		{
+			fwrite($f, "\t" . '<' . $key . ' type="array" />' . "\n");
+		}
+	}
+	
+	protected function writeManifestProperties($f)
+	{
+		foreach($this->propMap as $src => $map)
+		{
+			if($src == 'none' || $src == 'asset_object') continue;
+			foreach($map as $pk => $sk)
+			{
+				$v = $this->$pk;
+				if(is_array($v))
+				{
+					$this->writeManifestArray($f, $v, $pk);
+				}
+				else if(is_object($v))
+				{
+					if($v->key)
+					{
+						fwrite($f, "\t" . '<' . $pk . '>' . $v->key . '</' . $pk . '>' . "\n");
+					}
+					else
+					{
+						fwrite($f, "\t" . '<' . $pk . ' />' . "\n");
+					}
+				}
+				else if(is_bool($v))
+				{
+					fwrite($f, "\t" . '<' . $pk . ' type="boolean">' . intval($v) . '</' . $pk . '>' . "\n");
+				}
+				else
+				{
+					fwrite($f, "\t" . '<' . $pk . '>' . htmlspecialchars($v, ENT_QUOTES, 'UTF-8') . '</' . $pk . '>' . "\n");
+				}
+			}
+		}
+
+	}
 	
 	public function commit()
 	{
 		$this->replaceProperties();
+		$this->commitManifest();
 	}
 	
 	public function __get($name)

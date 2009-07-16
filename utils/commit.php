@@ -27,32 +27,20 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-require_once(dirname(__FILE__) . '/import/marshal.php');
-require_once(dirname(__FILE__) . '/import/tv-anytime.php');
-require_once(dirname(__FILE__) . '/import/folder.php');
-require_once(dirname(__FILE__) . '/import/imagesequence.php');
+require(dirname(__FILE__) . '/../lib/common.php');
 
-class AssetImport
+$db = DBCore::connect(DB_IRI);
+
+array_shift($argv);
+foreach($argv as $a)
 {
-	protected static $classes = array(
-		'TVAGenreImport',
-		'TVAFormatImport',
-		'TVAMediaTypeImport',
-		'FolderImport',
-		'ImageImport',
-	);
-	
-	public static function import($db, $source)
+	$obj = Asset::get($db, $a);
+	if($obj)
 	{
-		foreach(self::$classes as $class)
-		{
-			if(($data = call_user_func(array($class, 'canImport'), $source)))
-			{
-				$importer = new $class($db, $source, $data);
-				return $importer->import();
-			}
-		}
-		echo "Warning: No suitable importer found for $source\n";
-		return null;
+		$obj->commit();
+	}
+	else
+	{
+		echo "No such object '" . $a . "'\n";
 	}
 }

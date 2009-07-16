@@ -34,7 +34,7 @@ $db = DBCore::connect(DB_IRI);
 class AssetsModule extends DBModule
 {
 	protected $identifier = 'com.nexgenta.assets';
-	protected $currentVersion = 112;
+	protected $currentVersion = 117;
 	
 	protected function performUpdate($ver)
 	{
@@ -202,6 +202,56 @@ class AssetsModule extends DBModule
 				' INDEX ("video_depth"), ' .
 				' INDEX ("video_fps") ' .
 				')');
+			return true;
+		}
+		if($ver == 112)
+		{
+			$this->db->exec('CREATE TABLE "asset_picture" (' .
+				' "object_key" CHAR(8) NOT NULL, ' .
+				' "picture_title" VARCHAR(255) NOT NULL, ' .
+				' "picture_source" CHAR(8) DEFAULT NULL, ' .
+				' "picture_orig_source" CHAR(8) DEFAULT NULL, ' .
+				' "picture_lossy" ENUM(\'N\', \'Y\') NOT NULL, ' .
+				' "picture_type" VARCHAR(64) NOT NULL, ' .
+				' "picture_copyright" TEXT DEFAULT NULL, ' .
+				' "picture_license" TEXT DEFAULT NULL, ' . 				
+				' "picture_xres" BIGINT UNSIGNED NOT NULL, ' .
+				' "picture_yres" BIGINT UNSIGNED NOT NULL, ' .
+				' "picture_depth" BIGINT UNSIGNED NOT NULL, ' .
+				' "picture_chroma" BIGINT UNSIGNED NOT NULL, ' . 
+				' PRIMARY KEY ("object_key"), ' .
+				' INDEX ("picture_source"), ' .
+				' INDEX ("picture_orig_source"), ' . 
+				' INDEX ("picture_lossy"), ' .
+				' INDEX ("picture_type"), ' .
+				' INDEX ("picture_chroma"), ' .
+				' INDEX ("picture_xres"), ' .
+				' INDEX ("picture_yres"), ' .
+				' INDEX ("picture_depth") ' .
+				')');
+			return true;
+		}
+		if($ver == 113)
+		{
+			$this->db->exec('ALTER TABLE "asset_object" ADD COLUMN "object_has_manifest" ENUM(\'N\', \'Y\') NOT NULL DEFAULT \'N\'');
+			return true;
+		}
+		if($ver == 114)
+		{
+			$this->db->exec('ALTER TABLE "asset_object" ADD INDEX "object_has_manifest" ("object_has_manifest")');
+			return true;
+		}
+		if($ver == 115)
+		{
+			$this->db->exec('ALTER TABLE "asset_picture" DROP INDEX "picture_chroma"');
+			$this->db->exec('ALTER TABLE "asset_picture" DROP COLUMN "picture_chroma"');
+			$this->db->exec('ALTER TABLE "asset_picture" ADD COLUMN "picture_chroma" VARCHAR(8) NOT NULL');
+			$this->db->exec('ALTER TABLE "asset_picture" ADD INDEX "picture_chroma" ("picture_chroma")');
+			return true;
+		}
+		if($ver == 116)
+		{
+			$this->db->exec('ALTER TABLE "asset_picture" ADD "picture_filename" VARCHAR(64) NOT NULL');
 			return true;
 		}
 		return false;

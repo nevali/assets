@@ -27,32 +27,60 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-require_once(dirname(__FILE__) . '/import/marshal.php');
-require_once(dirname(__FILE__) . '/import/tv-anytime.php');
-require_once(dirname(__FILE__) . '/import/folder.php');
-require_once(dirname(__FILE__) . '/import/imagesequence.php');
 
-class AssetImport
+require_once('object.php');
+
+class PictureAsset extends Asset
 {
-	protected static $classes = array(
-		'TVAGenreImport',
-		'TVAFormatImport',
-		'TVAMediaTypeImport',
-		'FolderImport',
-		'ImageImport',
-	);
+	protected $source;
+	protected $origSource;
+	public $title;
+	public $lossy;
+	public $type;
+	public $copyright;
+	public $license;
+	public $width;
+	public $height;
+	public $depth;
+	public $chroma;
+	public $filename;
 	
-	public static function import($db, $source)
+	public static function create($db, $class = '')
 	{
-		foreach(self::$classes as $class)
+		if($class == '') $class = 'picture';
+		return parent::create($db, $class);
+	}
+	
+	protected function init(&$data)
+	{
+		parent::init($data);
+		$this->assetRefs += array('source', 'origSource');
+		$this->propMap['asset_picture'] = array(
+			'source' => 'picture_source',
+			'origSource' => 'picture_orig_source',
+			'title' => 'picture_title',
+			'lossy' => 'picture_lossy',
+			'type' => 'picture_type',
+			'copyright' => 'picture_copyright',
+			'license' => 'picture_license',
+			'width' => 'picture_xres',
+			'height' => 'picture_yres',
+			'depth' => 'picture_depth',
+			'chroma' => 'picture_chroma',
+			'filename' => 'picture_filename',
+			);
+	}		
+
+	protected function initProperties($source, $map = null)
+	{
+		parent::initProperties($source, $map);
+		if($this->lossy == 'Y')
 		{
-			if(($data = call_user_func(array($class, 'canImport'), $source)))
-			{
-				$importer = new $class($db, $source, $data);
-				return $importer->import();
-			}
+			$this->lossy = true;
 		}
-		echo "Warning: No suitable importer found for $source\n";
-		return null;
+		else if($this->lossy == 'N')
+		{
+			$this->lossy = false;
+		}
 	}
 }

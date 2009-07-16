@@ -51,7 +51,7 @@ class FolderImport extends ImportMarshal
 		{
 			$ext = pathinfo($de, PATHINFO_EXTENSION);
 			$name = pathinfo($de, PATHINFO_FILENAME);
-			if(isset(ImageSequenceImport::$imageFormats[strtolower($ext)]))
+			if(isset(ImageImport::$imageFormats[strtolower($ext)]))
 			{
 				$seqdigits = 0;
 				$l = strlen($name);

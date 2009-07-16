@@ -47,3 +47,4 @@ require_once(dirname(__FILE__) . '/object.php');
 require_once(dirname(__FILE__) . '/prog.php');
 require_once(dirname(__FILE__) . '/genre.php');
 require_once(dirname(__FILE__) . '/video.php');
+require_once(dirname(__FILE__) . '/picture.php');
