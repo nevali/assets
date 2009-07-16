@@ -27,7 +27,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-require('../lib/common.php');
+require(dirname(__FILE__) . '/../lib/common.php');
 
 $db = DBCore::connect(DB_IRI);
 
