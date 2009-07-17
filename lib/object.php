@@ -45,7 +45,7 @@ abstract class Asset
 	protected $db;
 	protected $assetRefs;
 	protected $propMap;
-	
+
 	public $class;
 	public $key;
 	public $created;
@@ -53,6 +53,7 @@ abstract class Asset
 	public $url;
 	public $hasManifest;
 	public $assetPath;
+	public $assetURI;
 	
 	public static function create($db, $class = '')
 	{
@@ -133,6 +134,11 @@ abstract class Asset
 		$this->propMap = array();
 		/* Ensure $this->key is available early */
 		$this->key = $data['object_key'];
+		$this->assetPath = ASSET_DIR . '/' . $this->key . '/';
+		if(defined('ASSET_URI'))
+		{
+			$this->assetURI = ASSET_URI . '/' . $this->key . '/';
+		}
 		$this->init($data);
 		$this->initProperties($data);
 	}
